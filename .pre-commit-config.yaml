@@ -1,0 +1,37 @@
+repos:
+  # ── General file hygiene ───────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+      - id: detect-private-key
+      - id: check-merge-conflict
+      - id: no-commit-to-branch
+        args: ["--branch", "main"]
+
+  # ── Ruff: lint + format ────────────────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # ── Dependency CVE audit ───────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: dep-cve-check
+        name: Dependency CVE check (OSV)
+        language: system
+        # Run inside the uv-managed venv so no separate install step is needed
+        entry: uv run python scripts/check_dep_cves.py --fix
+        files: ^(pyproject\.toml|requirements.*\.txt|uv\.lock)$
+        pass_filenames: false
+        verbose: true

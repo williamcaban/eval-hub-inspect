@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# eval-hub-inspect project-specific
+# (benchmark datasets and gold files — large, never commit)
+data/
+# inspect_ai evaluation log output
+logs/
+*.jsonl.cache
+bandit-results.sarif
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor backup / swap files
+*.orig
+*.swp
+*~

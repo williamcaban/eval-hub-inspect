@@ -1,0 +1,20 @@
+services:
+  default:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Input datasets — read-only; pre-downloaded by scripts/download_data.py
+      - type: bind
+        source: ${AGENTICDATABENCH_DATA:-./data/agenticdatabench}/datasets
+        target: /datasets
+        read_only: true
+      # Gold reference files — read-only
+      - type: bind
+        source: ${AGENTICDATABENCH_DATA:-./data/agenticdatabench}/gold
+        target: /gold
+        read_only: true
+    working_dir: /workspace
+    # Override entrypoint so inspect_ai can exec into the container
+    entrypoint: []
+    command: ["tail", "-f", "/dev/null"]

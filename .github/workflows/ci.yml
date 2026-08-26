@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Lint + format ──────────────────────────────────────────────────────────
+  lint:
+    name: Ruff lint & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev
+      - name: Lint
+        run: uv run ruff check . --output-format=github
+      - name: Format check
+        run: uv run ruff format --check .
+
+  # ── Type checking ──────────────────────────────────────────────────────────
+  typecheck:
+    name: mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev
+      - run: uv run mypy src/ scripts/
+
+  # ── Security scan ──────────────────────────────────────────────────────────
+  bandit:
+    name: Bandit security scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev
+      - name: Scan
+        run: uv run bandit -r src/ scripts/ -ll --format sarif -o bandit-results.sarif
+        continue-on-error: true
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bandit-results.sarif
+          category: bandit
+
+  # ── Dependency CVE audit ───────────────────────────────────────────────────
+  dep-cve-check:
+    name: Dependency CVE check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Run CVE check
+        id: cve
+        run: |
+          uv run python scripts/check_dep_cves.py --fix --strict 2>&1 | tee /tmp/cve_output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+      - name: Post PR comment on failure
+        if: >
+          github.event_name == 'pull_request' &&
+          steps.cve.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const raw = fs.readFileSync('/tmp/cve_output.txt', 'utf8');
+            const summaryMatch = raw.match(/## Dependency CVE Check[\s\S]*/);
+            const body = summaryMatch
+              ? summaryMatch[0]
+              : `## ⚠️ Dependency CVE Check Failed\n\`\`\`\n${raw}\n\`\`\``;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const bot = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Dependency CVE Check')
+            );
+            if (bot) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: bot.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number, body,
+              });
+            }
+      - name: Fail on CVEs
+        if: steps.cve.outputs.exit_code != '0'
+        run: exit 1
+
+  # ── Tests ──────────────────────────────────────────────────────────────────
+  test:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev
+      - run: uv run pytest --tb=short -q
