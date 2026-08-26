@@ -50,7 +50,7 @@ jobs:
         run: uv run bandit -r src/ scripts/ -ll --format sarif -o bandit-results.sarif
         continue-on-error: true
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: bandit-results.sarif
           category: bandit
