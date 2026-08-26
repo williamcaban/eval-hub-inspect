@@ -71,6 +71,27 @@ eval-hub-inspect/
 
 ---
 
+## Branch protection — PRs required
+
+**Direct pushes to `main` are blocked.** All changes go through pull requests.
+
+```bash
+# Always start work on a branch
+git checkout -b feat/<benchmark-name>   # or fix/, docs/, chore/
+
+# After passing quality gates, push and open a PR
+git push -u origin feat/<benchmark-name>
+gh pr create --title "<type>: <description>" --body "..."
+
+# Merge once all 5 CI checks are green
+gh pr merge --squash
+```
+
+Never commit directly to `main`. Never force-push. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for the full PR workflow and branch naming conventions.
+
+---
+
 ## Toolchain
 
 Always use `uv run` — never bare `python`, `pip`, or `pytest`.
@@ -87,14 +108,17 @@ Always use `uv run` — never bare `python`, `pip`, or `pytest`.
 | Security scan | `uv run bandit -r src/ scripts/ -ll` |
 | CVE audit (deps) | `uv run python scripts/check_dep_cves.py --fix` |
 | Add a dependency | `uv add <package>` then commit `uv.lock` |
+| Create PR | `gh pr create --title "..." --body "..."` |
+| Merge PR (after CI) | `gh pr merge --squash` |
 
 **Python version**: 3.12 minimum. Do not use syntax or APIs exclusive to 3.13+.
 
 ---
 
-## Quality gates — must pass before any commit
+## Quality gates — must pass before opening a PR
 
-Run these in order. A commit that fails any gate will be blocked by CI.
+Run these locally before pushing. CI runs the same checks on every PR and blocks
+merging if any fail.
 
 ```bash
 # 1. Lint (includes bandit-S security rules, isort, bugbear, pyupgrade)
@@ -117,6 +141,15 @@ Pre-commit hooks run gates 1, 2, and 5 automatically. Install them once:
 
 ```bash
 uv run pre-commit install
+```
+
+Once all gates pass locally, push your branch and open a PR:
+
+```bash
+git push -u origin <your-branch>
+gh pr create --title "<type>: <description>" --body "..."
+# CI runs all 5 checks; merge only after all are green
+gh pr merge --squash
 ```
 
 ### CVE audit rules
