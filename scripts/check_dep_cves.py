@@ -29,6 +29,7 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 ECOSYSTEM = "PyPI"
 OSV_BATCH_URL = "https://api.osv.dev/v1/querybatch"
@@ -116,7 +117,7 @@ def parse_requirements(path: Path) -> list[tuple[str, str, str]]:
 def query_osv_batch(
     packages: list[tuple[str, str]],
     strict: bool,
-) -> list[dict] | None:
+) -> list[dict[str, Any]] | None:
     """
     Batch-query OSV for (name, version) pairs.
     Returns a list of result dicts in the same order, or None on network failure.
@@ -139,7 +140,8 @@ def query_osv_batch(
     try:
         # S310: URL is the module-level constant OSV_BATCH_URL (https://), not user input.
         with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310
-            return json.loads(resp.read())["results"]
+            result: list[dict[str, Any]] = json.loads(resp.read())["results"]
+            return result
     except urllib.error.URLError as exc:
         msg = f"OSV API unreachable: {exc}"
         if strict:
@@ -176,7 +178,7 @@ def fetch_fixed_version(pkg: str, vuln_ids: list[str]) -> str | None:
     if not fixed:
         return None
     try:
-        from packaging.version import Version  # type: ignore[import-untyped]  # optional fast path
+        from packaging.version import Version  # optional fast path; not in core deps
 
         return str(max(fixed, key=Version))
     except ImportError:
@@ -186,7 +188,7 @@ def fetch_fixed_version(pkg: str, vuln_ids: list[str]) -> str | None:
 # ── Reporting ──────────────────────────────────────────────────────────────────
 
 
-def _make_summary(vulnerable: list[dict], *, suggest_fix: bool) -> str:
+def _make_summary(vulnerable: list[dict[str, Any]], *, suggest_fix: bool) -> str:
     """Build the human-readable / Markdown summary block."""
     lines = ["## Dependency CVE Check — Vulnerable Minimum Versions Found\n"]
     lines.append(f"**{len(vulnerable)} package(s)** pin a minimum version with known CVEs.\n")
@@ -252,12 +254,12 @@ def main(argv: list[str]) -> int:
         return 1  # strict mode + network failure
 
     # Collect vulnerable entries
-    vulnerable: list[dict] = []
+    vulnerable: list[dict[str, Any]] = []
     for (name, min_ver, source), res in zip(entries, results, strict=True):
         vuln_ids = [v["id"] for v in res.get("vulns", [])]
         if not vuln_ids:
             continue
-        rec: dict = {"name": name, "min_ver": min_ver, "source": source, "ids": vuln_ids}
+        rec: dict[str, Any] = {"name": name, "min_ver": min_ver, "source": source, "ids": vuln_ids}
         if suggest_fix:
             rec["fix"] = fetch_fixed_version(name, vuln_ids) or "check PyPI"
         vulnerable.append(rec)

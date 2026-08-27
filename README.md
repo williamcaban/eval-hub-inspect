@@ -50,24 +50,43 @@ uv run inspect eval src/agenticdatabench/task.py@agenticdatabench \
 uv run inspect view
 ```
 
-## Code quality
+## Contributing
 
-All commits pass:
-- **ruff** — lint + format (includes bandit-S security rules)
-- **mypy** strict — type checking
-- **bandit** — standalone security scan → GitHub Security tab (SARIF)
-- **OSV CVE audit** — dependency minimums checked against the OSV database on every `pyproject.toml` change
-
-Run locally:
+All changes go through pull requests — direct pushes to `main` are blocked.
 
 ```bash
-uv run ruff check .
-uv run ruff format --check .
+git checkout -b feat/my-change
+# … make changes, run quality gates …
+git push -u origin feat/my-change
+gh pr create --title "feat: ..." --body "..."
+# CI must pass (ruff, mypy, pytest, CVE check, bandit) before merge
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and [AGENTS.md](AGENTS.md)
+for the 12-step guide to adding a new benchmark.
+
+## Code quality
+
+Every PR must pass five CI checks:
+
+| Check | Tool |
+|---|---|
+| Lint + format | `ruff check . && ruff format --check .` |
+| Type checking | `mypy src/ scripts/` (strict) |
+| Tests | `pytest` |
+| CVE audit | `scripts/check_dep_cves.py --strict` vs OSV |
+| Security scan | `bandit -r src/ scripts/ -ll` → GitHub Security tab |
+
+Run locally before pushing:
+
+```bash
+uv run ruff check . --fix && uv run ruff format .
 uv run mypy src/ scripts/
+uv run pytest
 uv run python scripts/check_dep_cves.py --fix
 ```
 
-Install pre-commit hooks (runs automatically on every commit):
+Install pre-commit hooks (auto-runs ruff + CVE check on every commit):
 
 ```bash
 uv run pre-commit install

@@ -50,13 +50,15 @@ def load_samples(
         tasks_path = Path(data_dir) / "tasks" / f"{split}.jsonl"
         lines = tasks_path.read_text(encoding="utf-8").splitlines()
     else:
-        tasks_path = hf_hub_download(
-            repo_id=REPO_ID,
-            filename=f"testbed/tasks/{split}.jsonl",
-            repo_type="dataset",
-            revision=HF_REVISION,
+        tasks_path = Path(
+            hf_hub_download(
+                repo_id=REPO_ID,
+                filename=f"testbed/tasks/{split}.jsonl",
+                repo_type="dataset",
+                revision=HF_REVISION,
+            )
         )
-        lines = Path(tasks_path).read_text(encoding="utf-8").splitlines()
+        lines = tasks_path.read_text(encoding="utf-8").splitlines()
 
     samples: list[Sample] = []
     for line in lines:

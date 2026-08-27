@@ -46,6 +46,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: uv sync --group dev
+        # bandit-sarif-formatter adds the --format sarif option (not bundled with bandit)
+      - run: uv pip install bandit-sarif-formatter
       - name: Scan
         run: uv run bandit -r src/ scripts/ -ll --format sarif -o bandit-results.sarif
         continue-on-error: true
@@ -117,5 +119,6 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: uv sync --group dev
+      # Install dev tools + agenticdatabench optional deps (cv2, pandas, etc.)
+      - run: uv sync --group dev --extra agenticdatabench
       - run: uv run pytest --tb=short -q

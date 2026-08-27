@@ -117,7 +117,7 @@ def find_matching_key(
     return best_match
 
 
-def count_nested_fields(threshold: dict) -> int:
+def count_nested_fields(threshold: dict[str, Any]) -> int:
     """Count the total number of fields in a nested threshold configuration."""
     count = 0
     for v in threshold.values():

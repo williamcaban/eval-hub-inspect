@@ -76,6 +76,11 @@ strict = true
 # inspect_ai ships type stubs; third-party data-science libs may not
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# metrics/ is ported from DA-Code (MIT) — third-party code with relaxed typing
+module = ["agenticdatabench.metrics.*"]
+ignore_errors = true
+
 # ── Bandit ────────────────────────────────────────────────────────────────────
 # Bandit is run via ruff-S, but keep a standalone config for CI --bandit step
 # so reports surface file:line references in GH Actions annotations.
