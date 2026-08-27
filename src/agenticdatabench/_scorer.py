@@ -88,12 +88,13 @@ def agenticdatabench_scorer() -> Scorer:
                 local = tmp / "output" / fname
                 local.parent.mkdir(parents=True, exist_ok=True)
                 try:
-                    is_bin = _is_binary(fname)
-                    content = await sb.read_file(f"/workspace/{fname}", text=not is_bin)
-                    if is_bin:
-                        local.write_bytes(content)  # type: ignore[arg-type]
+                    if _is_binary(fname):
+                        local.write_bytes(await sb.read_file(f"/workspace/{fname}", text=False))
                     else:
-                        local.write_text(content, encoding="utf-8")  # type: ignore[arg-type]
+                        local.write_text(
+                            await sb.read_file(f"/workspace/{fname}", text=True),
+                            encoding="utf-8",
+                        )
                     output_map[fname] = str(local)
                 except Exception as exc:
                     logging.debug(f"Output file {fname} not produced: {exc}")
@@ -104,12 +105,13 @@ def agenticdatabench_scorer() -> Scorer:
                 local = tmp / "gold" / base
                 local.parent.mkdir(parents=True, exist_ok=True)
                 try:
-                    is_bin = _is_binary(fname)
-                    content = await sb.read_file(f"/gold/{task_id}/{base}", text=not is_bin)
-                    if is_bin:
-                        local.write_bytes(content)  # type: ignore[arg-type]
+                    if _is_binary(fname):
+                        local.write_bytes(await sb.read_file(f"/gold/{task_id}/{base}", text=False))
                     else:
-                        local.write_text(content, encoding="utf-8")  # type: ignore[arg-type]
+                        local.write_text(
+                            await sb.read_file(f"/gold/{task_id}/{base}", text=True),
+                            encoding="utf-8",
+                        )
                     gold_map[fname] = str(local)
                     gold_map[base] = str(local)
                 except Exception as exc:

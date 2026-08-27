@@ -73,7 +73,7 @@ def compare_text(
     output_normalized = " ".join(output_text.lower().split())
     reference_normalized = " ".join(reference_text.lower().split())
 
-    errors: list[str] = []
+    errors = []  # type already inferred from the except blocks above
 
     if len(output_text) < 1000:
         output_data: str | None = output_text
