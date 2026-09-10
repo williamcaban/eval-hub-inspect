@@ -39,7 +39,7 @@ def _extract_judgment(completion: str) -> bool | None:
 
 @scorer(metrics=[mean(), stderr()])
 def agentjudgebench_scorer() -> Scorer:
-    async def score(state: TaskState, target: Target) -> Score:  # noqa: ARG001
+    async def score(state: TaskState, target: Target) -> Score:
         completion = state.output.completion if state.output else ""
         judgment = _extract_judgment(completion)
 

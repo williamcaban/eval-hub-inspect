@@ -35,7 +35,10 @@ class TestExtractJudgment:
 
     def test_correct_in_preamble_fallback(self):
         # Model adds preamble before the verdict word.
-        assert _extract_judgment("Based on my analysis: CORRECT. The agent followed all steps.") is True
+        assert (
+            _extract_judgment("Based on my analysis: CORRECT. The agent followed all steps.")
+            is True
+        )
 
 
 def _make_state(completion: str, label: bool, difficulty: str = "easy") -> MagicMock:
