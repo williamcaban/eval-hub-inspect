@@ -53,6 +53,7 @@ def agenticdatabench(
             generate(),
         ],
         scorer=agenticdatabench_scorer(),
-        sandbox=("docker", "src/agenticdatabench/docker/compose.yaml"),
+        # Path is relative to this file's directory (src/agenticdatabench/)
+        sandbox=("docker", "docker/compose.yaml"),
         max_messages=30,
     )
